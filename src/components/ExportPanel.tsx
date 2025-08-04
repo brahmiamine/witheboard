@@ -205,7 +205,7 @@ export function ExportPanel({ isVisible, onClose }: ExportPanelProps) {
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value as any)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="json">JSON (données complètes)</option>
               <option value="csv">CSV (données tabulaires)</option>

@@ -10,6 +10,7 @@ interface User {
   id: string;
   name: string;
   color: string;
+  role: "viewer" | "admin";
   position: { x: number; y: number };
 }
 
@@ -18,6 +19,7 @@ interface CollaborationMessage {
   userId?: string;
   userName?: string;
   userColor?: string;
+  userRole?: "viewer" | "admin";
   cursorPosition?: { x: number; y: number };
   item?: any;
   itemId?: string;
@@ -28,9 +30,11 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
   const [isConnected, setIsConnected] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState<"viewer" | "admin">("viewer");
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<string[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [shareLink, setShareLink] = useState("");
 
   const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -41,6 +45,11 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
+  const generateShareLink = (roomId: string, role: "viewer" | "admin") => {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?room=${roomId}&role=${role}`;
+  };
+
   const connectToRoom = () => {
     if (!roomId || !userName) return;
 
@@ -49,14 +58,19 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
 
     socket.onopen = () => {
       setIsConnected(true);
-      addMessage(`Connecté à la salle ${roomId}`);
-
+      addMessage(`Connecté à la salle ${roomId} en tant que ${userRole}`);
+      
+      // Générer le lien de partage
+      const link = generateShareLink(roomId, userRole);
+      setShareLink(link);
+      
       // Simuler l'envoi d'un message de connexion
       const joinMessage: CollaborationMessage = {
         type: "user_join",
         userId: Date.now().toString(),
         userName: userName,
         userColor: generateUserColor(),
+        userRole: userRole,
       };
       socket.send(JSON.stringify(joinMessage));
     };
@@ -90,20 +104,22 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
     }
     setUsers([]);
     setMessages([]);
+    setShareLink("");
   };
 
   const handleCollaborationMessage = (message: CollaborationMessage) => {
     switch (message.type) {
       case "user_join":
-        if (message.userId && message.userName && message.userColor) {
+        if (message.userId && message.userName && message.userColor && message.userRole) {
           const newUser: User = {
             id: message.userId,
             name: message.userName,
             color: message.userColor,
+            role: message.userRole,
             position: { x: 0, y: 0 },
           };
           setUsers((prev) => [...prev, newUser]);
-          addMessage(`${message.userName} a rejoint la salle`);
+          addMessage(`${message.userName} a rejoint la salle (${message.userRole})`);
         }
         break;
       case "user_leave":
@@ -118,19 +134,19 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
         }
         break;
       case "item_add":
-        if (message.item) {
+        if (message.item && userRole === "admin") {
           addItem(message.item.type, message.item.position, message.item.size);
           addMessage(`Nouvel élément ajouté par ${message.userName}`);
         }
         break;
       case "item_update":
-        if (message.itemId && message.item) {
+        if (message.itemId && message.item && userRole === "admin") {
           updateItemPosition(message.itemId, message.item.position);
           addMessage(`Élément mis à jour par ${message.userName}`);
         }
         break;
       case "item_delete":
-        if (message.itemId) {
+        if (message.itemId && userRole === "admin") {
           deleteItem(message.itemId);
           addMessage(`Élément supprimé par ${message.userName}`);
         }
@@ -140,6 +156,11 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
 
   const addMessage = (message: string) => {
     setMessages((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(shareLink);
+    addMessage("Lien de partage copié dans le presse-papiers");
   };
 
   useEffect(() => {
@@ -190,7 +211,7 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
                     type="text"
                     value={roomId}
                     onChange={(e) => setRoomId(e.target.value)}
-                    className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                    className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="ID de la salle"
                   />
                   <button
@@ -208,9 +229,21 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Votre nom"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rôle :</label>
+                <select
+                  value={userRole}
+                  onChange={(e) => setUserRole(e.target.value as "viewer" | "admin")}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="viewer">Viewer (lecture seule)</option>
+                  <option value="admin">Admin (modification complète)</option>
+                </select>
               </div>
 
               <button
@@ -227,8 +260,30 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
               <div className="p-3 bg-green-50 dark:bg-green-900 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-700 dark:text-green-300">Connecté à la salle {roomId}</span>
+                  <span className="text-sm text-green-700 dark:text-green-300">Connecté à la salle {roomId} en tant que {userRole}</span>
                 </div>
+              </div>
+
+              {/* Lien de partage */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Lien de partage :</h3>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={shareLink}
+                    readOnly
+                    className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm"
+                  />
+                  <button
+                    onClick={copyShareLink}
+                    className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-300 rounded-lg"
+                  >
+                    Copier
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Partagez ce lien avec d'autres utilisateurs. Ils peuvent rejoindre en tant que viewer ou admin.
+                </p>
               </div>
 
               {/* Utilisateurs connectés */}
@@ -239,6 +294,13 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
                     <div key={user.id} className="flex items-center space-x-2 text-sm">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: user.color }}></div>
                       <span className="text-gray-600 dark:text-gray-400">{user.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        user.role === "admin" 
+                          ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" 
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      }`}>
+                        {user.role}
+                      </span>
                       {user.id === Date.now().toString() && <span className="text-xs text-blue-600 dark:text-blue-400">(Vous)</span>}
                     </div>
                   ))}
@@ -268,6 +330,8 @@ export function CollaborationPanel({ isVisible, onClose }: CollaborationPanelPro
           <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
             <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-1">Fonctionnalités de collaboration :</h4>
             <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+              <p>• <strong>Viewer</strong> : Peut voir le canvas et les curseurs</p>
+              <p>• <strong>Admin</strong> : Peut modifier, ajouter et supprimer des éléments</p>
               <p>• Partage en temps réel des éléments</p>
               <p>• Curseurs des autres utilisateurs</p>
               <p>• Messages de collaboration</p>

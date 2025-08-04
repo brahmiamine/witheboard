@@ -103,6 +103,174 @@ export function JsonEditor({ isVisible, onClose }: JsonEditorProps) {
     );
   };
 
+  const getCompleteExample = () => {
+    return JSON.stringify(
+      {
+        type: "text",
+        position: { x: 100, y: 100 },
+        size: { width: 300, height: 80 },
+        content: "Exemple complet avec tous les attributs",
+        color: "#1976d2",
+        backgroundColor: "#e3f2fd",
+        borderColor: "#1976d2",
+        borderWidth: 2,
+        opacity: 1,
+        rotation: 0,
+        zIndex: 1,
+        fontSize: 18,
+        fontFamily: "Arial",
+        fontWeight: "bold",
+        fontStyle: "normal",
+        textDecoration: "none",
+        textAlign: "center",
+      },
+      null,
+      2
+    );
+  };
+
+  const getMultipleCompleteExample = () => {
+    return JSON.stringify(
+      [
+        {
+          type: "text",
+          position: { x: 50, y: 50 },
+          size: { width: 250, height: 60 },
+          content: "Titre principal",
+          color: "#000000",
+          backgroundColor: "#ffffff",
+          borderColor: "#000000",
+          borderWidth: 1,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 24,
+          fontFamily: "Arial",
+          fontWeight: "bold",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+        {
+          type: "post-it",
+          position: { x: 50, y: 150 },
+          size: { width: 200, height: 150 },
+          content: "Note importante\n\n- Point 1\n- Point 2\n- Point 3",
+          color: "#000000",
+          backgroundColor: "#fff3e0",
+          borderColor: "#ff9800",
+          borderWidth: 0,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 14,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "left",
+        },
+        {
+          type: "rectangle",
+          position: { x: 300, y: 50 },
+          size: { width: 150, height: 100 },
+          content: "Rectangle avec texte",
+          color: "#000000",
+          backgroundColor: "#e8f5e8",
+          borderColor: "#4caf50",
+          borderWidth: 3,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 16,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+        {
+          type: "circle",
+          position: { x: 300, y: 200 },
+          size: { width: 120, height: 120 },
+          content: "Cercle",
+          color: "#000000",
+          backgroundColor: "#fce4ec",
+          borderColor: "#e91e63",
+          borderWidth: 2,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 16,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+        {
+          type: "triangle",
+          position: { x: 500, y: 50 },
+          size: { width: 100, height: 100 },
+          content: "Triangle",
+          color: "#000000",
+          backgroundColor: "#fff8e1",
+          borderColor: "#ffc107",
+          borderWidth: 1,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 14,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+        {
+          type: "arrow",
+          position: { x: 500, y: 200 },
+          size: { width: 200, height: 50 },
+          content: "Flèche",
+          color: "#9c27b0",
+          backgroundColor: "transparent",
+          borderColor: "#9c27b0",
+          borderWidth: 0,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 14,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+        {
+          type: "line",
+          position: { x: 50, y: 350 },
+          size: { width: 300, height: 20 },
+          content: "Ligne",
+          color: "#607d8b",
+          backgroundColor: "transparent",
+          borderColor: "#607d8b",
+          borderWidth: 0,
+          opacity: 1,
+          rotation: 0,
+          zIndex: 1,
+          fontSize: 14,
+          fontFamily: "Arial",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          textDecoration: "none",
+          textAlign: "center",
+        },
+      ],
+      null,
+      2
+    );
+  };
+
   const handleLoadSample = (sample: string) => {
     setJsonInput(sample);
     setError("");
@@ -125,7 +293,7 @@ export function JsonEditor({ isVisible, onClose }: JsonEditorProps) {
           {/* Exemples rapides */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Exemples rapides :</h3>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 flex-wrap gap-2">
               <button
                 onClick={() => handleLoadSample(getSampleJson())}
                 className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded border"
@@ -137,6 +305,18 @@ export function JsonEditor({ isVisible, onClose }: JsonEditorProps) {
                 className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded border"
               >
                 Multiples éléments
+              </button>
+              <button
+                onClick={() => handleLoadSample(getCompleteExample())}
+                className="px-3 py-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 rounded border"
+              >
+                Exemple complet
+              </button>
+              <button
+                onClick={() => handleLoadSample(getMultipleCompleteExample())}
+                className="px-3 py-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 rounded border"
+              >
+                Multiples complets
               </button>
             </div>
           </div>
@@ -183,7 +363,10 @@ export function JsonEditor({ isVisible, onClose }: JsonEditorProps) {
                 <strong>Styles de texte :</strong> fontSize, fontFamily, fontWeight, fontStyle, textDecoration, textAlign, color
               </p>
               <p>
-                <strong>Styles de forme :</strong> backgroundColor, borderColor, borderWidth, opacity, rotation
+                <strong>Styles de forme :</strong> backgroundColor, borderColor, borderWidth, opacity, rotation, zIndex
+              </p>
+              <p>
+                <strong>Propriétés avancées :</strong> startPoint, endPoint (pour flèches/lignes), imageUrl, imageAlt (pour images)
               </p>
             </div>
           </div>
