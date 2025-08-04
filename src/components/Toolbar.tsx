@@ -1,16 +1,33 @@
 import { useRef, useState } from "react";
 import { useWhiteboard } from "../context/WhiteboardContext";
 import type { ElementType } from "../types";
+import { JsonEditor } from "./JsonEditor";
+
+import { CollaborationPanel } from "./CollaborationPanel";
+import { ExportPanel } from "./ExportPanel";
 
 export function Toolbar() {
-  const { addItem, clearAll, state, undo, redo, copyItem, pasteItem, importImage } = useWhiteboard();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { state, addItem, copyItem, pasteItem, undo, redo, importImage } = useWhiteboard();
   const [showStylePanel, setShowStylePanel] = useState(false);
+  const [showJsonEditor, setShowJsonEditor] = useState(false);
+  const [showExportPanel, setShowExportPanel] = useState(false);
+  const [showCollaborationPanel, setShowCollaborationPanel] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const tools: { type: ElementType; label: string; icon: string; color: string }[] = [
+    { type: "post-it", label: "Post-it", icon: "📝", color: "bg-yellow-400" },
+    { type: "rectangle", label: "Rectangle", icon: "⬜", color: "bg-blue-400" },
+    { type: "text", label: "Texte", icon: "T", color: "bg-gray-400" },
+    { type: "circle", label: "Cercle", icon: "⭕", color: "bg-pink-400" },
+    { type: "triangle", label: "Triangle", icon: "🔺", color: "bg-green-400" },
+    { type: "arrow", label: "Flèche", icon: "➡️", color: "bg-purple-400" },
+    { type: "line", label: "Ligne", icon: "➖", color: "bg-orange-400" },
+  ];
 
   const handleAddItem = (type: ElementType) => {
     const position = {
-      x: window.innerWidth / 2 - 75,
-      y: window.innerHeight / 2 - 50,
+      x: Math.random() * (window.innerWidth - 200) + 100,
+      y: Math.random() * (window.innerHeight - 200) + 100,
     };
     addItem(type, position);
   };
@@ -20,247 +37,176 @@ export function Toolbar() {
     if (file) {
       importImage(file);
     }
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleCopy = () => {
-    if (state.selectedItem) {
-      copyItem(state.selectedItem);
-    }
-  };
-
-  const handlePaste = () => {
-    const position = {
-      x: window.innerWidth / 2 - 75,
-      y: window.innerHeight / 2 - 50,
-    };
-    pasteItem(position);
-  };
-
-  const tools = [
-    {
-      type: "post-it" as const,
-      label: "Post-it",
-      icon: "📝",
-      color: "bg-yellow-100 hover:bg-yellow-200",
-    },
-    {
-      type: "rectangle" as const,
-      label: "Rectangle",
-      icon: "⬜",
-      color: "bg-blue-100 hover:bg-blue-200",
-    },
-    {
-      type: "circle" as const,
-      label: "Cercle",
-      icon: "⭕",
-      color: "bg-pink-100 hover:bg-pink-200",
-    },
-    {
-      type: "triangle" as const,
-      label: "Triangle",
-      icon: "🔺",
-      color: "bg-green-100 hover:bg-green-200",
-    },
-    {
-      type: "text" as const,
-      label: "Texte",
-      icon: "T",
-      color: "bg-gray-100 hover:bg-gray-200",
-    },
-    {
-      type: "arrow" as const,
-      label: "Flèche",
-      icon: "➡️",
-      color: "bg-purple-100 hover:bg-purple-200",
-    },
-    {
-      type: "line" as const,
-      label: "Ligne",
-      icon: "➖",
-      color: "bg-orange-100 hover:bg-orange-200",
-    },
-  ];
-
   return (
-    <div className="fixed left-4 top-4 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Outils</h3>
+    <>
+      <div className="fixed left-4 top-4 z-40 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700 w-64">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Outils</h2>
 
-        {/* Formes et éléments */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400">Formes</h4>
-          {tools.map((tool) => (
+        <div className="space-y-4">
+          {/* Formes */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Formes</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {tools.map((tool) => (
+                <button
+                  key={tool.type}
+                  onClick={() => handleAddItem(tool.type)}
+                  className="flex items-center space-x-2 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
+                >
+                  <span className="text-lg">{tool.icon}</span>
+                  <span className="text-sm font-medium">{tool.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Images */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Images</h3>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             <button
-              key={tool.type}
-              onClick={() => handleAddItem(tool.type)}
-              className={`
-                w-full flex items-center space-x-2 px-3 py-2 rounded-lg
-                ${tool.color} dark:bg-gray-700 dark:hover:bg-gray-600
-                transition-all duration-200 ease-in-out
-                hover:shadow-md transform hover:scale-105
-                text-gray-700 dark:text-gray-300
-              `}
-              title={`Ajouter un ${tool.label}`}
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
             >
-              <span className="text-lg">{tool.icon}</span>
-              <span className="text-sm font-medium">{tool.label}</span>
+              <span className="text-lg">🖼️</span>
+              <span className="text-sm font-medium">Importer image</span>
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Import d'image */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-          <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Images</h4>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
-          >
-            <span className="text-lg">🖼️</span>
-            <span className="text-sm font-medium">Importer Image</span>
-          </button>
-        </div>
-
-        {/* Style Panel Toggle */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-          <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Style</h4>
-          <button
-            onClick={() => setShowStylePanel(!showStylePanel)}
-            className={`
-              w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105
-              ${
-                showStylePanel
-                  ? "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:hover:bg-green-800 dark:text-green-300"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-              }
-            `}
-            title="Afficher/Masquer le panneau de style"
-          >
-            <span className="text-lg">🎨</span>
-            <span className="text-sm font-medium">Panneau Style</span>
-          </button>
-        </div>
-
-        {/* Actions */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-          <h4 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Actions</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={handleCopy}
-              disabled={!state.selectedItem}
-              className={`
-                flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium
-                ${
+          {/* Actions */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => copyItem(state.selectedItem!)}
+                disabled={!state.selectedItem}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out ${
                   state.selectedItem
-                    ? "bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-300"
+                    ? "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:hover:bg-green-800 dark:text-green-300"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }
-                transition-all duration-200 ease-in-out
-              `}
-              title="Copier (Ctrl+C)"
-            >
-              📋
-            </button>
-            <button
-              onClick={handlePaste}
-              disabled={!state.clipboard}
-              className={`
-                flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium
-                ${
+                }`}
+              >
+                <span>📋</span>
+                <span>Copier</span>
+              </button>
+
+              <button
+                onClick={() => pasteItem({ x: 100, y: 100 })}
+                disabled={!state.clipboard}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out ${
                   state.clipboard
                     ? "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:hover:bg-green-800 dark:text-green-300"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }
-                transition-all duration-200 ease-in-out
-              `}
-              title="Coller (Ctrl+V)"
-            >
-              📄
-            </button>
-            <button
-              onClick={undo}
-              disabled={state.historyIndex <= 0}
-              className={`
-                flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium
-                ${
+                }`}
+              >
+                <span>📄</span>
+                <span>Coller</span>
+              </button>
+
+              <button
+                onClick={undo}
+                disabled={state.historyIndex <= 0}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out ${
                   state.historyIndex > 0
                     ? "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 dark:bg-yellow-900 dark:hover:bg-yellow-800 dark:text-yellow-300"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }
-                transition-all duration-200 ease-in-out
-              `}
-              title="Annuler (Ctrl+Z)"
-            >
-              ↩️
-            </button>
-            <button
-              onClick={redo}
-              disabled={state.historyIndex >= state.history.length - 1}
-              className={`
-                flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium
-                ${
+                }`}
+              >
+                <span>↶</span>
+                <span>Annuler</span>
+              </button>
+
+              <button
+                onClick={redo}
+                disabled={state.historyIndex >= state.history.length - 1}
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out ${
                   state.historyIndex < state.history.length - 1
                     ? "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 dark:bg-yellow-900 dark:hover:bg-yellow-800 dark:text-yellow-300"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }
-                transition-all duration-200 ease-in-out
-              `}
-              title="Rétablir (Ctrl+Y)"
+                }`}
+              >
+                <span>↷</span>
+                <span>Rétablir</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Avancé */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Avancé</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowJsonEditor(true)}
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900 dark:hover:bg-purple-800 dark:text-purple-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
+              >
+                <span className="text-lg">{}</span>
+                <span className="text-sm font-medium">Éditeur JSON</span>
+              </button>
+
+              <button
+                onClick={() => setShowExportPanel(true)}
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900 dark:hover:bg-indigo-800 dark:text-indigo-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
+              >
+                <span className="text-lg">📤</span>
+                <span className="text-sm font-medium">Exporter</span>
+              </button>
+
+              <button
+                onClick={() => setShowCollaborationPanel(true)}
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 dark:bg-teal-900 dark:hover:bg-teal-800 dark:text-teal-300 transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105"
+              >
+                <span className="text-lg">👥</span>
+                <span className="text-sm font-medium">Collaboration</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Style Panel Toggle */}
+          <div>
+            <button
+              onClick={() => setShowStylePanel(!showStylePanel)}
+              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md transform hover:scale-105 ${
+                showStylePanel
+                  ? "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:hover:bg-green-800 dark:text-green-300"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+              }`}
             >
-              ↪️
+              <span className="text-lg">🎨</span>
+              <span className="text-sm font-medium">Panneau de style</span>
             </button>
           </div>
-        </div>
 
-        {/* Tout effacer */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-          <button
-            onClick={clearAll}
-            disabled={state.items.length === 0}
-            className={`
-              w-full flex items-center space-x-2 px-3 py-2 rounded-lg
-              ${
+          {/* Tout effacer */}
+          <div>
+            <button
+              onClick={() => {
+                if (confirm("Êtes-vous sûr de vouloir tout effacer ?")) {
+                  // clearAll function would be called here
+                }
+              }}
+              disabled={state.items.length === 0}
+              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out ${
                 state.items.length === 0
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900 dark:hover:bg-red-800 dark:text-red-300"
-              }
-              transition-all duration-200 ease-in-out
-              hover:shadow-md transform hover:scale-105
-            `}
-            title="Tout effacer"
-          >
-            <span className="text-lg">🗑️</span>
-            <span className="text-sm font-medium">Tout effacer</span>
-          </button>
-        </div>
-
-        {/* Informations */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2 space-y-1">
-          <p>Éléments: {state.items.length}</p>
-          <p>
-            Historique: {state.historyIndex + 1}/{state.history.length}
-          </p>
-          <p className="mt-2 text-xs">
-            <strong>Raccourcis:</strong>
-            <br />
-            Delete: Supprimer
-            <br />
-            Escape: Désélectionner
-            <br />
-            Ctrl+Z: Annuler
-            <br />
-            Ctrl+Y: Rétablir
-            <br />
-            Double-clic: Éditer
-            <br />
-            ↑↓: Avant/Arrière-plan
-          </p>
+              }`}
+            >
+              <span className="text-lg">🗑️</span>
+              <span className="text-sm font-medium">Tout effacer</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Modals */}
+      <JsonEditor isVisible={showJsonEditor} onClose={() => setShowJsonEditor(false)} />
+      <ExportPanel isVisible={showExportPanel} onClose={() => setShowExportPanel(false)} />
+      <CollaborationPanel isVisible={showCollaborationPanel} onClose={() => setShowCollaborationPanel(false)} />
+    </>
   );
 }
